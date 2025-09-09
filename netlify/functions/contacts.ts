@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
-import { listTable, mapContactRecord } from './_lib/airtable.js';
-import { Contact } from './_lib/types.js';
+import { listTable, mapContactRecord } from './_lib/airtable';
+import { Contact } from './_lib/types';
 
 export const handler: Handler = async (event, context) => {
   try {
@@ -32,7 +32,7 @@ export const handler: Handler = async (event, context) => {
     const filters: string[] = [];
 
     // Filter out "Do Not Contact" records
-    filters.push(`{Do Not Contact} != 1`);
+    filters.push(`NOT({Do Not Contact})`);
 
     if (clientId) {
       filters.push(`FIND("${clientId}", ARRAYJOIN({Linked Client}, ",")) > 0`);

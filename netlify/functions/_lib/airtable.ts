@@ -1,4 +1,4 @@
-import { AirtableRecord } from './types.js';
+import { AirtableRecord } from './types';
 
 const AIRTABLE_BASE_ID = process.env.AIRTABLE_BASE_ID;
 const AIRTABLE_PAT = process.env.AIRTABLE_PAT;

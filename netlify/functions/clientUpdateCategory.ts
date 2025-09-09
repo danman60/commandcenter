@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
-import { updateRecord } from './_lib/airtable.js';
-import { UpdateClientCategorySchema } from './_lib/types.js';
+import { updateRecord } from './_lib/airtable';
+import { UpdateClientCategorySchema } from './_lib/types';
 
 export const handler: Handler = async (event, context) => {
   try {

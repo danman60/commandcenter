@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
-import { createRecord, getRecord } from './_lib/airtable.js';
-import { CreateInteractionSchema } from './_lib/types.js';
+import { createRecord, getRecord } from './_lib/airtable';
+import { CreateInteractionSchema } from './_lib/types';
 
 export const handler: Handler = async (event, context) => {
   try {

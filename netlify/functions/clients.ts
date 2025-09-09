@@ -1,6 +1,6 @@
 import { Handler } from '@netlify/functions';
-import { listTable, mapClientRecord } from './_lib/airtable.js';
-import { Client } from './_lib/types.js';
+import { listTable, mapClientRecord } from './_lib/airtable';
+import { Client } from './_lib/types';
 
 export const handler: Handler = async (event, context) => {
   try {
@@ -32,8 +32,8 @@ export const handler: Handler = async (event, context) => {
     let filterFormula = '';
     const filters: string[] = [];
 
-    // Filter out "Do Not Contact" records
-    filters.push(`{Do Not Contact} != 1`);
+    // Filter out "Do Not Contact" records - if field exists
+    // filters.push(`NOT({Do Not Contact})`);
 
     if (overdue === 'true') {
       filters.push(`{Days Since Last Outreach} >= 3`);

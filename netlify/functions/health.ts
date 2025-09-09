@@ -1,5 +1,5 @@
 import { Handler } from '@netlify/functions';
-import { listTable } from './_lib/airtable.js';
+import { listTable } from './_lib/airtable';
 
 export const handler: Handler = async (event, context) => {
   try {
