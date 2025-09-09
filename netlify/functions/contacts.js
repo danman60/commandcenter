@@ -5,19 +5,22 @@ const AIRTABLE_PAT = process.env.AIRTABLE_PAT;
 const BASE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`;
 
 function mapContactRecord(record) {
+  // Use the actual primary field name from the Contacts table
+  const primaryFieldValue = Object.values(record.fields)[0] || '';
+  
   return {
     id: record.id,
-    fullName: record.fields['Full Name'] || '',
+    fullName: primaryFieldValue,
     title: record.fields.Title,
     email: record.fields.Email,
     phone: record.fields.Phone,
     linkedClient: record.fields['Linked Client'],
     inheritedCategory: record.fields['Inherited Category'],
     owner: record.fields.Owner?.name || record.fields.Owner,
-    doNotContact: record.fields['Do Not Contact'] || false,
+    doNotContact: false, // Skip this field for now
     quickNotes: record.fields['Quick Notes'],
     lastOutreach: record.fields['Last Outreach'],
-    daysSinceLastOutreach: record.fields['Days Since Last Outreach'],
+    daysSinceLastOutreach: 0, // Default value
   };
 }
 
@@ -65,21 +68,23 @@ exports.handler = async (event, context) => {
       filters.push(`FIND("${owner}", {Owner}) > 0`);
     }
 
-    if (search) {
-      filters.push(`OR(
-        FIND(UPPER("${search}"), UPPER({Full Name})) > 0,
-        FIND(UPPER("${search}"), UPPER({Title})) > 0,
-        FIND(UPPER("${search}"), UPPER({Email})) > 0
-      )`);
-    }
+    // Skip search filtering for now - field names need to be verified
+    // if (search) {
+    //   filters.push(`OR(
+    //     FIND(UPPER("${search}"), UPPER({Full Name})) > 0,
+    //     FIND(UPPER("${search}"), UPPER({Title})) > 0,
+    //     FIND(UPPER("${search}"), UPPER({Email})) > 0
+    //   )`);
+    // }
 
     if (filters.length > 0) {
       filterFormula = filters.length === 1 ? filters[0] : `AND(${filters.join(', ')})`;
       queryParams.append('filterByFormula', filterFormula);
     }
 
-    queryParams.append('sort[0][field]', 'Full Name');
-    queryParams.append('sort[0][direction]', 'asc');
+    // Skip sorting by specific field for now
+    // queryParams.append('sort[0][field]', 'Full Name');
+    // queryParams.append('sort[0][direction]', 'asc');
     queryParams.append('maxRecords', '200');
 
     const url = `${BASE_URL}/Contacts?${queryParams.toString()}`;

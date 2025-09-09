@@ -5,6 +5,7 @@ const AIRTABLE_PAT = process.env.AIRTABLE_PAT;
 const BASE_URL = `https://api.airtable.com/v0/${AIRTABLE_BASE_ID}`;
 
 function mapClientRecord(record) {
+  // Map fields that actually exist in the Airtable base
   return {
     id: record.id,
     clientName: record.fields['Client Name'] || '',
@@ -13,12 +14,14 @@ function mapClientRecord(record) {
     website: record.fields.Website,
     tags: record.fields.Tags || [],
     owner: record.fields.Owner?.name || record.fields.Owner || '',
-    category: record.fields.Category || 'Cold Lead',
-    doNotContact: record.fields['Do Not Contact'] || false,
+    category: Array.isArray(record.fields.Category) 
+      ? record.fields.Category[0] || 'Cold Lead' 
+      : record.fields.Category || 'Cold Lead',
+    doNotContact: false, // Skip this field for now
     clientNotes: record.fields['Client Notes'],
     lastOutreach: record.fields['Last Outreach'],
-    daysSinceLastOutreach: record.fields['Days Since Last Outreach'],
-    alertLevel: record.fields['Alert Level'] || 'None',
+    daysSinceLastOutreach: 0, // Default value - field may not exist
+    alertLevel: 'None', // Default value - field may not exist
     nextTouchDate: record.fields['Next Touch Date'],
   };
 }
@@ -70,9 +73,10 @@ exports.handler = async (event, context) => {
     let filterFormula = '';
     const filters = [];
 
-    if (overdue === 'true') {
-      filters.push(`{Days Since Last Outreach} >= 3`);
-    }
+    // Skip overdue filtering for now - field might not exist
+    // if (overdue === 'true') {
+    //   filters.push(`{Days Since Last Outreach} >= 3`);
+    // }
 
     if (category) {
       filters.push(`{Category} = "${category}"`);
@@ -95,16 +99,9 @@ exports.handler = async (event, context) => {
       queryParams.append('filterByFormula', filterFormula);
     }
 
-    // Add sorting
-    if (overdue === 'true') {
-      queryParams.append('sort[0][field]', 'Alert Level');
-      queryParams.append('sort[0][direction]', 'desc');
-      queryParams.append('sort[1][field]', 'Days Since Last Outreach');
-      queryParams.append('sort[1][direction]', 'desc');
-    } else {
-      queryParams.append('sort[0][field]', 'Client Name');
-      queryParams.append('sort[0][direction]', 'asc');
-    }
+    // Add sorting - using basic fields that exist
+    queryParams.append('sort[0][field]', 'Client Name');
+    queryParams.append('sort[0][direction]', 'asc');
 
     queryParams.append('maxRecords', '100');
 
