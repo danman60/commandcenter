@@ -1,5 +1,6 @@
 import { useClients } from '../hooks/useClients';
 import { AlertLevel } from '../api/types';
+import { ClientTableView } from '../components/ClientTableView';
 
 export function Dashboard() {
   const { data: allClients, isLoading, error } = useClients({});
@@ -95,48 +96,18 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow">
-        <div className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Top 20 Overdue Clients</h3>
-          
-          {topOverdueClients.length === 0 ? (
-            <p className="text-gray-500">No overdue clients</p>
-          ) : (
-            <table>
-              <thead>
-                <tr>
-                  <th>Client Name</th>
-                  <th>Owner</th>
-                  <th>Category</th>
-                  <th>Alert Level</th>
-                  <th>Days Since Last Outreach</th>
-                  <th>Location</th>
-                </tr>
-              </thead>
-              <tbody>
-                {topOverdueClients.map((client) => (
-                  <tr key={client.id}>
-                    <td className="font-medium">{client.clientName}</td>
-                    <td>{client.owner}</td>
-                    <td>{client.category}</td>
-                    <td>
-                      <span className={`px-2 py-1 rounded text-xs font-medium ${
-                        client.alertLevel === '6 weeks' ? 'bg-red-100 text-red-800' :
-                        client.alertLevel === '3 weeks' ? 'bg-orange-100 text-orange-800' :
-                        client.alertLevel === '1 week' ? 'bg-yellow-100 text-yellow-800' :
-                        'bg-blue-100 text-blue-800'
-                      }`}>
-                        {client.alertLevel}
-                      </span>
-                    </td>
-                    <td className="text-center">{client.daysSinceLastOutreach}</td>
-                    <td>{[client.city, client.provinceState].filter(Boolean).join(', ')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-semibold mb-4">All Clients</h3>
+          <ClientTableView clients={clients} />
         </div>
+        
+        {topOverdueClients.length > 0 && (
+          <div>
+            <h3 className="text-lg font-semibold mb-4">Priority Follow-ups</h3>
+            <ClientTableView clients={topOverdueClients.slice(0, 10)} />
+          </div>
+        )}
       </div>
     </div>
   );
