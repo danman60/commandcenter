@@ -2,7 +2,6 @@ import { Client } from '../api/types';
 
 interface ClientTableViewProps {
   clients: Client[];
-  onClientClick?: (clientId: string) => void;
 }
 
 function getClientInitials(clientName: string): string {
@@ -14,22 +13,6 @@ function getClientInitials(clientName: string): string {
     .substring(0, 2);
 }
 
-function getCategoryColor(category: string | string[]): string {
-  const cat = Array.isArray(category) ? category[0] : category;
-  
-  const colorMap: Record<string, string> = {
-    'Dance': 'bg-blue-100 text-blue-800',
-    'Theatre': 'bg-purple-100 text-purple-800',
-    'Music': 'bg-green-100 text-green-800',
-    'Corporate': 'bg-orange-100 text-orange-800',
-    'Event': 'bg-pink-100 text-pink-800',
-    'Previous Client': 'bg-emerald-100 text-emerald-800',
-    'Warm Lead': 'bg-yellow-100 text-yellow-800',
-    'Cold Lead': 'bg-gray-100 text-gray-800',
-  };
-  
-  return colorMap[cat] || 'bg-gray-100 text-gray-800';
-}
 
 function formatDate(dateString?: string): string {
   if (!dateString) return '';
@@ -42,7 +25,7 @@ function formatDate(dateString?: string): string {
   });
 }
 
-export function ClientTableView({ clients, onClientClick }: ClientTableViewProps) {
+export function ClientTableView({ clients }: ClientTableViewProps) {
   const handleEmailClick = (clientId: string, e: React.MouseEvent) => {
     e.stopPropagation();
     // TODO: Log email interaction and update last contact date
