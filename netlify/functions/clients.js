@@ -141,7 +141,7 @@ exports.handler = async (event, context) => {
       }),
     };
   } catch (error) {
-    console.error('Error fetching clients:', error);
+    console.error('Error fetching clients:', error.message || error);
     
     return {
       statusCode: 500,
