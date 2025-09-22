@@ -38,8 +38,9 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 var airtable_1 = require("./_lib/airtable");
+var types_1 = require("./_lib/types");
 var handler = function (event, context) { return __awaiter(void 0, void 0, void 0, function () {
-    var params, clientId, owner, search, filterFormula, filters, result, contacts, error_1;
+    var clientId, requestData, validation, category, updatedRecord, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
@@ -50,45 +51,59 @@ var handler = function (event, context) { return __awaiter(void 0, void 0, void 
                             headers: {
                                 'Access-Control-Allow-Origin': '*',
                                 'Access-Control-Allow-Headers': 'Content-Type',
-                                'Access-Control-Allow-Methods': 'GET, OPTIONS',
+                                'Access-Control-Allow-Methods': 'PATCH, OPTIONS',
                             },
                             body: '',
                         }];
                 }
-                if (event.httpMethod !== 'GET') {
+                if (event.httpMethod !== 'PATCH') {
                     return [2 /*return*/, {
                             statusCode: 405,
                             body: JSON.stringify({ error: 'Method not allowed' }),
                         }];
                 }
-                params = new URLSearchParams(event.queryStringParameters || {});
-                clientId = params.get('clientId');
-                owner = params.get('owner');
-                search = params.get('search');
-                filterFormula = '';
-                filters = [];
-                // Filter out "Do Not Contact" records
-                filters.push("NOT({Do Not Contact})");
-                if (clientId) {
-                    filters.push("FIND(\"".concat(clientId, "\", ARRAYJOIN({Linked Client}, \",\")) > 0"));
+                clientId = event.path.split('/').pop();
+                if (!clientId) {
+                    return [2 /*return*/, {
+                            statusCode: 400,
+                            headers: {
+                                'Access-Control-Allow-Origin': '*',
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ error: 'Client ID is required' }),
+                        }];
                 }
-                if (owner) {
-                    filters.push("FIND(\"".concat(owner, "\", {Owner}) > 0"));
+                if (!event.body) {
+                    return [2 /*return*/, {
+                            statusCode: 400,
+                            headers: {
+                                'Access-Control-Allow-Origin': '*',
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ error: 'Request body is required' }),
+                        }];
                 }
-                if (search) {
-                    filters.push("OR(\n        FIND(UPPER(\"".concat(search, "\"), UPPER({Full Name})) > 0,\n        FIND(UPPER(\"").concat(search, "\"), UPPER({Title})) > 0,\n        FIND(UPPER(\"").concat(search, "\"), UPPER({Email})) > 0\n      )"));
+                requestData = JSON.parse(event.body);
+                validation = types_1.UpdateClientCategorySchema.safeParse(requestData);
+                if (!validation.success) {
+                    return [2 /*return*/, {
+                            statusCode: 400,
+                            headers: {
+                                'Access-Control-Allow-Origin': '*',
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                error: 'Invalid request data',
+                                details: validation.error.errors,
+                            }),
+                        }];
                 }
-                if (filters.length > 0) {
-                    filterFormula = filters.length === 1 ? filters[0] : "AND(".concat(filters.join(', '), ")");
-                }
-                return [4 /*yield*/, (0, airtable_1.listTable)('Contacts', {
-                        filterByFormula: filterFormula || undefined,
-                        sort: [{ field: 'Full Name', direction: 'asc' }],
-                        maxRecords: 200,
+                category = validation.data.category;
+                return [4 /*yield*/, (0, airtable_1.updateRecord)('Clients', clientId, {
+                        Category: category,
                     })];
             case 1:
-                result = _a.sent();
-                contacts = result.records.map(airtable_1.mapContactRecord);
+                updatedRecord = _a.sent();
                 return [2 /*return*/, {
                         statusCode: 200,
                         headers: {
@@ -96,14 +111,15 @@ var handler = function (event, context) { return __awaiter(void 0, void 0, void 
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            contacts: contacts,
-                            total: result.records.length,
-                            offset: result.offset,
+                            success: true,
+                            clientId: clientId,
+                            category: category,
+                            updatedAt: updatedRecord.createdTime,
                         }),
                     }];
             case 2:
                 error_1 = _a.sent();
-                console.error('Error fetching contacts:', error_1);
+                console.error('Error updating client category:', error_1);
                 return [2 /*return*/, {
                         statusCode: 500,
                         headers: {

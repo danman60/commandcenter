@@ -6,8 +6,33 @@ export function Dashboard() {
   const { data: allClients, isLoading, error } = useClients({});
   const { data: overdueClients } = useClients({ overdue: true });
 
-  if (isLoading) return <div>Loading dashboard...</div>;
-  if (error) return <div>Error loading dashboard: {String(error)}</div>;
+  if (isLoading) return (
+    <div className="flex items-center justify-center min-h-64">
+      <div className="text-lg text-gray-600">Loading dashboard...</div>
+    </div>
+  );
+
+  if (error) return (
+    <div className="bg-red-50 border border-red-200 rounded-lg p-6 mx-auto max-w-2xl mt-8">
+      <div className="flex items-center space-x-3">
+        <div className="text-red-400">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <div>
+          <h3 className="text-lg font-semibold text-red-800">System Temporarily Unavailable</h3>
+          <p className="text-red-700 mt-1">
+            We're experiencing technical difficulties connecting to the database.
+            This is typically resolved within a few minutes.
+          </p>
+          <div className="mt-4 text-sm text-red-600">
+            <p><strong>For administrators:</strong> Check backend deployment status and environment variables.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   const clients = allClients?.clients || [];
   const overdue = overdueClients?.clients || [];

@@ -37,63 +37,21 @@ var __generator = (this && this.__generator) || function (thisArg, body) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
-var airtable_1 = require("./_lib/airtable");
 var handler = function (event, context) { return __awaiter(void 0, void 0, void 0, function () {
-    var result, error_1;
     return __generator(this, function (_a) {
-        switch (_a.label) {
-            case 0:
-                _a.trys.push([0, 2, , 3]);
-                if (event.httpMethod === 'OPTIONS') {
-                    return [2 /*return*/, {
-                            statusCode: 200,
-                            headers: {
-                                'Access-Control-Allow-Origin': '*',
-                                'Access-Control-Allow-Headers': 'Content-Type',
-                                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                            },
-                            body: '',
-                        }];
-                }
-                if (event.httpMethod !== 'GET') {
-                    return [2 /*return*/, {
-                            statusCode: 405,
-                            body: JSON.stringify({ error: 'Method not allowed' }),
-                        }];
-                }
-                return [4 /*yield*/, (0, airtable_1.listTable)('Clients', { maxRecords: 1 })];
-            case 1:
-                result = _a.sent();
-                return [2 /*return*/, {
-                        statusCode: 200,
-                        headers: {
-                            'Access-Control-Allow-Origin': '*',
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            status: 'ok',
-                            timestamp: new Date().toISOString(),
-                            airtableConnection: 'connected',
-                            recordCount: result.records.length,
-                        }),
-                    }];
-            case 2:
-                error_1 = _a.sent();
-                console.error('Health check failed:', error_1);
-                return [2 /*return*/, {
-                        statusCode: 500,
-                        headers: {
-                            'Access-Control-Allow-Origin': '*',
-                            'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            status: 'error',
-                            timestamp: new Date().toISOString(),
-                            error: error_1 instanceof Error ? error_1.message : 'Unknown error',
-                        }),
-                    }];
-            case 3: return [2 /*return*/];
-        }
+        return [2 /*return*/, {
+                statusCode: 200,
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    message: 'Test function working',
+                    timestamp: new Date().toISOString(),
+                    method: event.httpMethod,
+                    path: event.path,
+                }),
+            }];
     });
 }); };
 exports.handler = handler;

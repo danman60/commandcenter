@@ -1,15 +1,4 @@
 "use strict";
-var __assign = (this && this.__assign) || function () {
-    __assign = Object.assign || function(t) {
-        for (var s, i = 1, n = arguments.length; i < n; i++) {
-            s = arguments[i];
-            for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p))
-                t[p] = s[p];
-        }
-        return t;
-    };
-    return __assign.apply(this, arguments);
-};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -50,91 +39,95 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.handler = void 0;
 var airtable_1 = require("./_lib/airtable");
 var handler = function (event, context) { return __awaiter(void 0, void 0, void 0, function () {
-    var params, overdue, category, owner, search, filterFormula, filters, sort, result, clients, clientsWithSeverity, error_1;
+    var result, overdueClients, summary_1, stats, error_1;
     return __generator(this, function (_a) {
         switch (_a.label) {
             case 0:
                 _a.trys.push([0, 2, , 3]);
-                if (event.httpMethod === 'OPTIONS') {
-                    return [2 /*return*/, {
-                            statusCode: 200,
-                            headers: {
-                                'Access-Control-Allow-Origin': '*',
-                                'Access-Control-Allow-Headers': 'Content-Type',
-                                'Access-Control-Allow-Methods': 'GET, OPTIONS',
-                            },
-                            body: '',
-                        }];
-                }
-                if (event.httpMethod !== 'GET') {
-                    return [2 /*return*/, {
-                            statusCode: 405,
-                            body: JSON.stringify({ error: 'Method not allowed' }),
-                        }];
-                }
-                params = new URLSearchParams(event.queryStringParameters || {});
-                overdue = params.get('overdue');
-                category = params.get('category');
-                owner = params.get('owner');
-                search = params.get('search');
-                filterFormula = '';
-                filters = [];
-                // Filter out "Do Not Contact" records - if field exists
-                // filters.push(`NOT({Do Not Contact})`);
-                if (overdue === 'true') {
-                    filters.push("{Days Since Last Outreach} >= 3");
-                }
-                if (category) {
-                    filters.push("{Category} = \"".concat(category, "\""));
-                }
-                if (owner) {
-                    filters.push("FIND(\"".concat(owner, "\", {Owner}) > 0"));
-                }
-                if (search) {
-                    filters.push("OR(\n        FIND(UPPER(\"".concat(search, "\"), UPPER({Client Name})) > 0,\n        FIND(UPPER(\"").concat(search, "\"), UPPER({City})) > 0,\n        FIND(UPPER(\"").concat(search, "\"), UPPER({Province/State})) > 0\n      )"));
-                }
-                if (filters.length > 0) {
-                    filterFormula = filters.length === 1 ? filters[0] : "AND(".concat(filters.join(', '), ")");
-                }
-                sort = overdue === 'true'
-                    ? [
-                        { field: 'Alert Level', direction: 'desc' },
-                        { field: 'Days Since Last Outreach', direction: 'desc' }
-                    ]
-                    : [
-                        { field: 'Client Name', direction: 'asc' }
-                    ];
+                console.log('Running daily overdue digest at:', new Date().toISOString());
                 return [4 /*yield*/, (0, airtable_1.listTable)('Clients', {
-                        filterByFormula: filterFormula || undefined,
-                        sort: sort,
-                        maxRecords: 100,
+                        filterByFormula: 'AND(NOT({Do Not Contact}), {Days Since Last Outreach} >= 3)',
+                        sort: [
+                            { field: 'Alert Level', direction: 'desc' },
+                            { field: 'Days Since Last Outreach', direction: 'desc' }
+                        ],
+                        maxRecords: 500,
                     })];
             case 1:
                 result = _a.sent();
-                clients = result.records.map(airtable_1.mapClientRecord);
-                clientsWithSeverity = clients.map(function (client) { return (__assign(__assign({}, client), { severityRank: getSeverityRank(client.alertLevel, client.daysSinceLastOutreach || 0) })); });
+                overdueClients = result.records.map(airtable_1.mapClientRecord);
+                summary_1 = {};
+                overdueClients.forEach(function (client) {
+                    var alertLevel = client.alertLevel;
+                    var owner = client.owner || 'Unassigned';
+                    if (!summary_1[alertLevel]) {
+                        summary_1[alertLevel] = {};
+                    }
+                    if (!summary_1[alertLevel][owner]) {
+                        summary_1[alertLevel][owner] = [];
+                    }
+                    summary_1[alertLevel][owner].push(client);
+                });
+                // Log the summary
+                console.log('=== DAILY OVERDUE DIGEST ===');
+                console.log("Total overdue clients: ".concat(overdueClients.length));
+                console.log('');
+                Object.keys(summary_1)
+                    .sort(function (a, b) { return getSeverityOrder(b) - getSeverityOrder(a); })
+                    .forEach(function (alertLevel) {
+                    console.log("".concat(alertLevel.toUpperCase(), ":"));
+                    Object.keys(summary_1[alertLevel])
+                        .sort()
+                        .forEach(function (owner) {
+                        var clients = summary_1[alertLevel][owner];
+                        console.log("  ".concat(owner, ": ").concat(clients.length, " clients"));
+                        clients.slice(0, 5).forEach(function (client) {
+                            console.log("    - ".concat(client.clientName, " (").concat(client.daysSinceLastOutreach, "d ago)"));
+                        });
+                        if (clients.length > 5) {
+                            console.log("    ... and ".concat(clients.length - 5, " more"));
+                        }
+                    });
+                    console.log('');
+                });
+                stats = {
+                    totalOverdue: overdueClients.length,
+                    byAlertLevel: Object.keys(summary_1).reduce(function (acc, level) {
+                        acc[level] = Object.values(summary_1[level]).flat().length;
+                        return acc;
+                    }, {}),
+                    byOwner: Object.values(summary_1).flat().reduce(function (acc, ownerClients) {
+                        Object.keys(ownerClients).forEach(function (owner) {
+                            acc[owner] = (acc[owner] || 0) + ownerClients[owner].length;
+                        });
+                        return acc;
+                    }, {}),
+                };
+                console.log('Summary statistics:', JSON.stringify(stats, null, 2));
+                console.log('=== END DIGEST ===');
                 return [2 /*return*/, {
                         statusCode: 200,
                         headers: {
-                            'Access-Control-Allow-Origin': '*',
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                            clients: clientsWithSeverity,
-                            total: result.records.length,
-                            offset: result.offset,
+                            success: true,
+                            timestamp: new Date().toISOString(),
+                            summary: stats,
+                            message: "Processed ".concat(overdueClients.length, " overdue clients"),
                         }),
                     }];
             case 2:
                 error_1 = _a.sent();
-                console.error('Error fetching clients:', error_1);
+                console.error('Error in overdue digest:', error_1);
                 return [2 /*return*/, {
                         statusCode: 500,
                         headers: {
-                            'Access-Control-Allow-Origin': '*',
                             'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
+                            success: false,
+                            timestamp: new Date().toISOString(),
                             error: error_1 instanceof Error ? error_1.message : 'Unknown error',
                         }),
                     }];
@@ -143,7 +136,7 @@ var handler = function (event, context) { return __awaiter(void 0, void 0, void 
     });
 }); };
 exports.handler = handler;
-function getSeverityRank(alertLevel, daysSince) {
+function getSeverityOrder(alertLevel) {
     switch (alertLevel) {
         case '6 weeks': return 4;
         case '3 weeks': return 3;
