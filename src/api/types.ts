@@ -1,6 +1,7 @@
 export type ClientCategory = 'Previous Client' | 'Warm Lead' | 'Cold Lead';
 export type AlertLevel = 'None' | '3 days' | '1 week' | '3 weeks' | '6 weeks';
 export type InteractionType = 'Phone' | 'Email' | 'Meeting' | 'Other';
+export type ServiceStatus = 'Signed up' | 'Rejected' | 'UnAsked';
 
 export interface Client {
   id: string;
@@ -10,7 +11,7 @@ export interface Client {
   website?: string;
   tags?: string[];
   owner: string;
-  category: ClientCategory;
+  category: ClientCategory | string[] | any; // Allow flexible category types from API
   doNotContact: boolean;
   clientNotes?: string;
   lastOutreach?: string;
@@ -18,6 +19,9 @@ export interface Client {
   alertLevel: AlertLevel;
   nextTouchDate?: string;
   severityRank?: number;
+  studiosageStatus?: ServiceStatus;
+  recitalVideoStatus?: ServiceStatus;
+  promoVideoStatus?: ServiceStatus;
 }
 
 export interface Contact {
